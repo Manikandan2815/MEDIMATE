@@ -14,6 +14,8 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const DEFAULT_PORT = parseInt(process.env.PORT || '3000', 10);
+const DEFAULT_GOOGLE_CLIENT_ID = '721624148499-tpkd4s251j1qskobmi4f2euiqq01k5e2.apps.googleusercontent.com';
+const DEFAULT_UPI_ID = 'pandianlogesh795@okicici';
 const googleClient = new OAuth2Client();
 const TRIAL_MONTHS = 3;
 const paymentTransactions = [];
@@ -80,9 +82,12 @@ function createUserFromGoogle(profile) {
 
 // GET /api/auth/config
 app.get('/api/auth/config', (req, res) => {
+  const googleClientId = process.env.GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID;
+  const upiId = process.env.MEDIMATE_UPI_ID || DEFAULT_UPI_ID;
+
   return res.json({
-    googleClientId: process.env.GOOGLE_CLIENT_ID || null,
-    upiId: process.env.MEDIMATE_UPI_ID || null
+    googleClientId,
+    upiId
   });
 });
 

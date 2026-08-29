@@ -5,6 +5,9 @@
 window.currentUser = null;
 window.authToken = null;
 
+const FALLBACK_GOOGLE_CLIENT_ID = '721624148499-tpkd4s251j1qskobmi4f2euiqq01k5e2.apps.googleusercontent.com';
+const FALLBACK_UPI_ID = 'pandianlogesh795@okicici';
+
 // Default Seed Demo User for offline fallback
 const DEFAULT_DEMO_USER = {
   id: 'user-8492',
@@ -163,12 +166,16 @@ async function initPaymentConfig() {
   try {
     const response = await fetch('/api/auth/config');
     const config = await response.json();
-    window.MEDIMATE_UPI_ID = config.upiId || '';
+    window.MEDIMATE_UPI_ID = config.upiId || FALLBACK_UPI_ID;
     const upiLabel = document.getElementById('paymentUpiId');
     if (upiLabel) upiLabel.textContent = window.MEDIMATE_UPI_ID || 'Not configured';
     renderPaymentQr();
   } catch (error) {
-    showBillingAlert('Payment configuration could not be loaded.', 'error');
+    window.MEDIMATE_UPI_ID = FALLBACK_UPI_ID;
+    const upiLabel = document.getElementById('paymentUpiId');
+    if (upiLabel) upiLabel.textContent = window.MEDIMATE_UPI_ID;
+    renderPaymentQr();
+    showBillingAlert('Using the default deployed UPI configuration.', 'warning');
   }
 }
 
@@ -226,11 +233,13 @@ async function loadGoogleConfig() {
   try {
     const configResponse = await fetch('/api/auth/config');
     const config = await configResponse.json();
-    window.MEDIMATE_GOOGLE_CLIENT_ID = config.googleClientId || '';
-    window.MEDIMATE_UPI_ID = config.upiId || '';
+    window.MEDIMATE_GOOGLE_CLIENT_ID = config.googleClientId || FALLBACK_GOOGLE_CLIENT_ID;
+    window.MEDIMATE_UPI_ID = config.upiId || FALLBACK_UPI_ID;
     return Boolean(window.MEDIMATE_GOOGLE_CLIENT_ID);
   } catch (error) {
-    return false;
+    window.MEDIMATE_GOOGLE_CLIENT_ID = FALLBACK_GOOGLE_CLIENT_ID;
+    window.MEDIMATE_UPI_ID = FALLBACK_UPI_ID;
+    return true;
   }
 }
 
@@ -271,7 +280,7 @@ async function startFreeTrial() {
 }
 
 function openLifetimePayment() {
-  const upiId = window.MEDIMATE_UPI_ID || '';
+  const upiId = window.MEDIMATE_UPI_ID || FALLBACK_UPI_ID;
   if (!upiId) {
     showBillingAlert('Add MEDIMATE_UPI_ID to .env before accepting payments.', 'error');
     return;
