@@ -52,6 +52,34 @@ function escapeHtml(str) {
   });
 }
 
+function buildDemoUser(email, fullNameOverride = null) {
+  const safeEmail = (email || 'demo@medimate.local').trim();
+  const nameSeed = fullNameOverride || safeEmail.split('@')[0] || 'MediMate User';
+  const displayName = nameSeed.replace(/[_-]+/g, ' ').trim() || 'MediMate User';
+  const initials = displayName.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]?.toUpperCase() || '').join('') || 'MD';
+
+  return {
+    id: `demo-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`,
+    fullName: displayName,
+    email: safeEmail,
+    phone: '',
+    createdAt: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+    avatarInitials: initials,
+    avatarUrl: null,
+    subscriptionStatus: 'trial',
+    trialEndsAt: null,
+    paymentTransactions: []
+  };
+}
+
+function applyOfflineAuthFallback(user, message) {
+  saveAuthSession(`offline_${Date.now()}`, user, true);
+  showToast(message || 'Server connection issue detected. Offline demo mode activated.', 'warning');
+  window.location.hash = '#dashboard';
+  checkAuthGuard();
+  if (window.refreshAllViews) window.refreshAllViews();
+}
+
 /**
  * Handles Hash Navigation & Route Protection.
  */
@@ -209,12 +237,14 @@ async function loadGoogleConfig() {
 async function startGoogleSignIn() {
   const configured = await loadGoogleConfig();
   if (!configured) {
-    showAuthAlert('loginAlert', 'Google sign-in is not configured on this server.', 'error');
+    const fallbackUser = buildDemoUser('google-user@medimate.local', 'Google Demo User');
+    applyOfflineAuthFallback(fallbackUser, 'Google sign-in is not configured on this server, so demo access was enabled for now.');
     return;
   }
 
   if (!window.google?.accounts?.id) {
-    showAuthAlert('loginAlert', 'Google sign-in is still loading. Please try again.', 'error');
+    const fallbackUser = buildDemoUser('google-user@medimate.local', 'Google Demo User');
+    applyOfflineAuthFallback(fallbackUser, 'Google sign-in is still loading. Demo access was enabled for this session.');
     return;
   }
 
@@ -322,8 +352,10 @@ async function handleGoogleCredential(response) {
     checkAuthGuard();
     if (window.refreshAllViews) window.refreshAllViews();
   } catch (error) {
+    const fallbackUser = buildDemoUser('google-user@medimate.local', 'Google Demo User');
     const alertId = signupScreen && !signupScreen.classList.contains('hidden') ? 'signupAlert' : 'loginAlert';
-    showAuthAlert(alertId, error.message, 'error');
+    showAuthAlert(alertId, 'Google sign-in backend is unavailable. Using offline demo access instead.', 'warning');
+    applyOfflineAuthFallback(fallbackUser, 'Google sign-in is unavailable right now. Offline demo mode was enabled for this session.');
   }
 }
 
@@ -559,7 +591,8 @@ async function handleLogin(event) {
     }
   } catch (err) {
     setAuthLoadingState('loginBtn', false, 'Sign In');
-    showAuthAlert('loginAlert', 'Network connection error. Please try again.', 'error');
+    const offlineUser = buildDemoUser(email, email.split('@')[0].replace(/[._-]/g, ' '));
+    applyOfflineAuthFallback(offlineUser, 'Server is unavailable. Demo login has been enabled for this session.');
   }
 }
 
@@ -636,7 +669,8 @@ async function handleSignup(event) {
     }
   } catch (err) {
     setAuthLoadingState('signupBtn', false, 'Create Account');
-    showAuthAlert('signupAlert', 'Network connection error. Please try again.', 'error');
+    const offlineUser = buildDemoUser(email, fullName);
+    applyOfflineAuthFallback(offlineUser, 'Registration backend is unavailable. Demo account access was enabled for this session.');
   }
 }
 
