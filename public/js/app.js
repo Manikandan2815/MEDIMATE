@@ -576,6 +576,13 @@ function renderDashboard() {
   if (rateEl) rateEl.textContent = `${adherenceRate}%`;
   if (lowStockEl) lowStockEl.textContent = lowStockCount;
 
+  const heroAdherence = document.getElementById('heroAdherenceValue');
+  const heroPending = document.getElementById('heroPendingValue');
+  const heroStock = document.getElementById('heroStockValue');
+  if (heroAdherence) heroAdherence.textContent = `${adherenceRate}%`;
+  if (heroPending) heroPending.textContent = pendingCount;
+  if (heroStock) heroStock.textContent = lowStockCount;
+
   const countBadge = document.getElementById('scheduleCountBadge');
   if (countBadge) countBadge.textContent = `${totalDoses} Scheduled`;
 
@@ -1364,6 +1371,7 @@ function saveSettings() {
  */
 function syncSettingsFormUI() {
   const s = window.appSettings;
+  if (window.renderSubscriptionStatus) window.renderSubscriptionStatus();
   const enableRem = document.getElementById('settingEnableReminders');
   const voiceRem = document.getElementById('settingVoiceReminders');
   const alarmSound = document.getElementById('settingAlarmSound');
@@ -1504,3 +1512,4 @@ window.handleCustomRingtoneUpload = handleCustomRingtoneUpload;
 window.removeCustomRingtone = removeCustomRingtone;
 window.syncAmPmFromTime = syncAmPmFromTime;
 window.syncTimeFromAmPm = syncTimeFromAmPm;
+

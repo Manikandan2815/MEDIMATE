@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="dark-theme">
@@ -111,7 +112,7 @@
       <div id="loginScreen" class="auth-screen">
         <h2 class="auth-title">Welcome Back</h2>
         <p class="text-secondary auth-desc">Sign in to access your medication schedule and assistant.</p>
-        
+
         <div id="loginAlert" class="auth-alert hidden"></div>
 
         <form id="loginForm" onsubmit="handleLogin(event)">
@@ -119,7 +120,7 @@
             <label for="loginEmail">Email Address</label>
             <div class="input-with-icon">
               <i data-lucide="mail" class="input-icon"></i>
-              <input type="email" id="loginEmail" placeholder="e.g. john.doe@medimate.health" value="john.doe@medimate.health" required>
+              <input type="email" id="loginEmail" placeholder="Enter your email address" required>
             </div>
           </div>
 
@@ -127,7 +128,7 @@
             <label for="loginPassword">Password</label>
             <div class="input-with-icon">
               <i data-lucide="lock" class="input-icon"></i>
-              <input type="password" id="loginPassword" placeholder="••••••••" value="Password123!" required>
+              <input type="password" id="loginPassword" placeholder="Enter your password" required>
               <button type="button" class="pwd-toggle-btn" onclick="togglePasswordVisibility('loginPassword', 'loginPwdIcon')" aria-label="Toggle password view">
                 <i data-lucide="eye" id="loginPwdIcon"></i>
               </button>
@@ -147,6 +148,13 @@
             <span>Sign In</span>
           </button>
         </form>
+
+        <div class="google-auth-divider"><span>or</span></div>
+        <div class="google-signin-button" data-google-signin></div>
+        <button type="button" id="googleFallbackButton" class="google-fallback-button" onclick="startGoogleSignIn()">
+          <span class="google-brand-mark">G</span>
+          <span>Continue with Google</span>
+        </button>
 
         <div class="auth-footer-link text-center margin-top-md">
           <span class="text-secondary">Don't have an account?</span>
@@ -197,9 +205,33 @@
 
           <div class="form-group">
             <label for="signupPhone">Phone Number (Optional)</label>
-            <div class="input-with-icon">
-              <i data-lucide="phone" class="input-icon"></i>
-              <input type="tel" id="signupPhone" placeholder="+1 (555) 000-0000">
+            <div class="phone-input-row">
+              <select id="signupCountryCode" class="custom-select country-code-select" aria-label="Country code">
+                <option value="+91" selected>+91 India</option>
+                <option value="+1">+1 United States/Canada</option>
+                <option value="+44">+44 United Kingdom</option>
+                <option value="+61">+61 Australia</option>
+                <option value="+971">+971 UAE</option>
+                <option value="+65">+65 Singapore</option>
+                <option value="+81">+81 Japan</option>
+                <option value="+49">+49 Germany</option>
+                <option value="+33">+33 France</option>
+                <option value="+39">+39 Italy</option>
+                <option value="+7">+7 Russia/Kazakhstan</option>
+                <option value="+86">+86 China</option>
+                <option value="+82">+82 South Korea</option>
+                <option value="+27">+27 South Africa</option>
+                <option value="+55">+55 Brazil</option>
+                <option value="+52">+52 Mexico</option>
+                <option value="+64">+64 New Zealand</option>
+                <option value="+94">+94 Sri Lanka</option>
+                <option value="+880">+880 Bangladesh</option>
+                <option value="+92">+92 Pakistan</option>
+              </select>
+              <div class="input-with-icon phone-number-input">
+                <i data-lucide="phone" class="input-icon"></i>
+                <input type="tel" id="signupPhone" placeholder="96006784369" inputmode="tel">
+              </div>
             </div>
           </div>
 
@@ -215,6 +247,9 @@
             <span>Create Account</span>
           </button>
         </form>
+
+        <div class="google-auth-divider"><span>or</span></div>
+        <div class="google-signin-button" data-google-signin></div>
 
         <div class="auth-footer-link text-center margin-top-md">
           <span class="text-secondary">Already have an account?</span>
@@ -460,6 +495,28 @@
         
         <!-- DASHBOARD TAB -->
         <section id="dashboard-tab" class="tab-content active">
+          <section class="care-hero reveal-on-scroll" aria-labelledby="careHeroTitle">
+            <div class="care-hero-copy">
+              <span class="eyebrow-label"><i data-lucide="sparkles"></i> Daily care system</span>
+              <h2 id="careHeroTitle">A calmer way to stay on track.</h2>
+              <p>Your schedule, stock, and adherence signals in one quiet command center.</p>
+              <div class="care-hero-actions">
+                <button class="primary-btn hero-cta" onclick="switchTab('medications')"><i data-lucide="plus"></i><span>Add medication</span></button>
+                <button class="hero-text-action" onclick="switchTab('analytics')"><span>View adherence</span><i data-lucide="arrow-up-right"></i></button>
+              </div>
+              <div class="hero-signal-row" aria-label="Current care metrics">
+                <div><strong id="heroAdherenceValue">0%</strong><span>adherence</span></div>
+                <div><strong id="heroPendingValue">0</strong><span>pending doses</span></div>
+                <div><strong id="heroStockValue">0</strong><span>low stock</span></div>
+              </div>
+            </div>
+            <div class="care-hero-stage" aria-label="Abstract 3D medication care object">
+              <canvas id="careSceneCanvas"></canvas>
+              <div class="hero-orbit-label hero-orbit-label-one">08:00 <span>next dose</span></div>
+              <div class="hero-orbit-label hero-orbit-label-two"><i data-lucide="shield-check"></i> protected</div>
+            </div>
+          </section>
+
           <!-- Summary Cards Grid -->
           <div class="summary-cards-grid">
             <div class="card summary-card glow-teal">
@@ -954,6 +1011,39 @@
               </div>
             </div>
 
+            <!-- Plans & Payments -->
+            <div class="section-card subscription-card">
+              <div class="card-header-with-icon">
+                <i data-lucide="badge-check"></i>
+                <h3>Plans & Payments</h3>
+              </div>
+              <div id="subscriptionStatus" class="subscription-status">Three-month free trial available</div>
+              <div class="subscription-plans">
+                <div class="subscription-plan">
+                  <strong>Free trial</strong>
+                  <span>All MediMate features for 3 months.</span>
+                  <button type="button" class="secondary-btn" onclick="startFreeTrial()">Start 3-month trial</button>
+                </div>
+                <div class="subscription-plan subscription-plan-featured">
+                  <strong>Lifetime access · ₹599</strong>
+                  <span>One-time UPI payment via Google Pay, PhonePe, or any UPI app.</span>
+                  <button type="button" class="primary-btn" onclick="openLifetimePayment()">
+                    <i data-lucide="indian-rupee"></i> Pay ₹599 with UPI
+                  </button>
+                  <img id="paymentQr" class="payment-qr" alt="UPI payment QR code">
+                  <small id="paymentQrHint" class="setting-desc">Scan with Google Pay, PhonePe, or another UPI app.</small>
+                  <div class="upi-destination">UPI ID: <strong id="paymentUpiId">Loading...</strong></div>
+                  <form class="upi-transaction-form" onsubmit="submitUpiTransaction(event)">
+                    <label for="upiTransactionId">UPI transaction ID</label>
+                    <input id="upiTransactionId" type="text" placeholder="Enter the reference after payment" autocomplete="off" required>
+                    <button type="submit" class="secondary-btn">Submit transaction for verification</button>
+                  </form>
+                </div>
+              </div>
+              <p class="setting-desc">Support: <a href="tel:96006784369">96006784369</a></p>
+              <div id="billingAlert" class="auth-alert hidden"></div>
+            </div>
+
             <!-- Appearance & System -->
             <div class="section-card">
               <div class="card-header-with-icon">
@@ -1397,6 +1487,8 @@
   <script src="js/analytics.js"></script>
   <script src="js/ai-assistant.js"></script>
   <script src="js/auth.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+  <script src="js/care-scene.js"></script>
   <script src="js/sparkles.js"></script>
   <script src="js/app.js"></script>
 </body>

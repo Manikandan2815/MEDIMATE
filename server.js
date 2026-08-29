@@ -1,6 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { OAuth2Client } from 'google-auth-library';
+import bcrypt from 'bcryptjs';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -11,26 +14,31 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const DEFAULT_PORT = parseInt(process.env.PORT || '3000', 10);
+const googleClient = new OAuth2Client();
+const TRIAL_MONTHS = 3;
+const paymentTransactions = [];
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// In-Memory User Database with default seed user
-const usersDb = [
-  {
-    id: 'user-8492',
-    fullName: 'John Doe',
-    email: 'john.doe@medimate.health',
-    password: 'Password123!', // In production, use bcrypt hash
-    phone: '+1 (555) 234-5678',
-    createdAt: 'August 19, 2026',
-    avatarInitials: 'JD',
-    avatarUrl: null
-  }
-];
+const usersFile = path.join(__dirname, 'data', 'users.json');
+const usersDb = fs.existsSync(usersFile) ? JSON.parse(fs.readFileSync(usersFile, 'utf8')) : [];
+
+function persistUsers() {
+  fs.mkdirSync(path.dirname(usersFile), { recursive: true });
+  fs.writeFileSync(usersFile, JSON.stringify(usersDb, null, 2));
+}
 
 function buildUserPayload(user) {
+  if (!user.trialStartedAt && user.subscriptionStatus !== 'lifetime') {
+    user.trialStartedAt = new Date().toISOString();
+    const trialEnds = new Date(user.trialStartedAt);
+    trialEnds.setMonth(trialEnds.getMonth() + TRIAL_MONTHS);
+    user.trialEndsAt = trialEnds.toISOString();
+    user.subscriptionStatus = 'trial';
+  }
+
   return {
     id: user.id,
     fullName: user.fullName,
@@ -38,7 +46,31 @@ function buildUserPayload(user) {
     phone: user.phone,
     createdAt: user.createdAt,
     avatarInitials: user.avatarInitials,
-    avatarUrl: user.avatarUrl || null
+    avatarUrl: user.avatarUrl || null,
+    subscriptionStatus: user.subscriptionStatus || 'trial',
+    trialEndsAt: user.trialEndsAt || null,
+    paymentTransactions: user.paymentTransactions || []
+  };
+}
+
+function createUserFromGoogle(profile) {
+  const fullName = profile.name?.trim() || profile.email.split('@')[0];
+  const nameParts = fullName.split(/\s+/);
+  const initials = nameParts.length > 1
+    ? (nameParts[0][0] + nameParts[1][0]).toUpperCase()
+    : fullName.substring(0, 2).toUpperCase();
+
+  return {
+    id: `user-${Date.now()}`,
+    fullName,
+    email: profile.email,
+    password: null,
+    phone: '',
+    createdAt: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+    avatarInitials: initials,
+    avatarUrl: profile.picture || null,
+    googleId: profile.sub,
+    subscriptionStatus: 'trial'
   };
 }
 
@@ -46,8 +78,16 @@ function buildUserPayload(user) {
 // AUTHENTICATION API ENDPOINTS
 // ==========================================
 
+// GET /api/auth/config
+app.get('/api/auth/config', (req, res) => {
+  return res.json({
+    googleClientId: process.env.GOOGLE_CLIENT_ID || null,
+    upiId: process.env.MEDIMATE_UPI_ID || null
+  });
+});
+
 // POST /api/auth/login
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -56,7 +96,7 @@ app.post('/api/auth/login', (req, res) => {
 
   const user = usersDb.find((u) => u.email.toLowerCase() === email.toLowerCase().trim());
 
-  if (!user || user.password !== password) {
+  if (!user || !user.passwordHash || !(await bcrypt.compare(password, user.passwordHash))) {
     return res.status(401).json({ error: 'Invalid email or password.' });
   }
 
@@ -65,7 +105,7 @@ app.post('/api/auth/login', (req, res) => {
 });
 
 // POST /api/auth/register
-app.post('/api/auth/register', (req, res) => {
+app.post('/api/auth/register', async (req, res) => {
   const { fullName, email, password, phone } = req.body;
 
   if (!fullName || !email || !password) {
@@ -87,7 +127,7 @@ app.post('/api/auth/register', (req, res) => {
     id: `user-${Date.now()}`,
     fullName: fullName.trim(),
     email: email.toLowerCase().trim(),
-    password: password,
+    passwordHash: await bcrypt.hash(password, 12),
     phone: phone ? phone.trim() : '',
     createdAt: new Date().toLocaleDateString('en-US', nowOptions),
     avatarInitials: initials,
@@ -95,9 +135,98 @@ app.post('/api/auth/register', (req, res) => {
   };
 
   usersDb.push(newUser);
+  persistUsers();
 
   const token = `token_${newUser.id}_${Date.now()}`;
   return res.status(201).json({ token, user: buildUserPayload(newUser) });
+});
+
+// POST /api/billing/trial
+app.post('/api/billing/trial', (req, res) => {
+  const { userId } = req.body;
+  const user = usersDb.find((candidate) => candidate.id === userId);
+  if (!user) return res.status(404).json({ error: 'User account not found.' });
+
+  if (user.subscriptionStatus !== 'lifetime') {
+    user.trialStartedAt = new Date().toISOString();
+    const trialEnds = new Date(user.trialStartedAt);
+    trialEnds.setMonth(trialEnds.getMonth() + TRIAL_MONTHS);
+    user.trialEndsAt = trialEnds.toISOString();
+    user.subscriptionStatus = 'trial';
+  }
+
+  return res.json({ user: buildUserPayload(user) });
+});
+
+// POST /api/billing/upi-transaction
+app.post('/api/billing/upi-transaction', (req, res) => {
+  const { userId, transactionId } = req.body;
+  if (!userId || !transactionId?.trim()) {
+    return res.status(400).json({ error: 'User ID and UPI transaction ID are required.' });
+  }
+
+  const user = usersDb.find((candidate) => candidate.id === userId);
+  if (!user) return res.status(404).json({ error: 'User account not found.' });
+
+  const transaction = {
+    id: `txn-${Date.now()}`,
+    userId,
+    transactionId: transactionId.trim(),
+    amount: 599,
+    currency: 'INR',
+    method: 'UPI',
+    status: 'pending_verification',
+    createdAt: new Date().toISOString()
+  };
+  paymentTransactions.push(transaction);
+  user.paymentTransactions = user.paymentTransactions || [];
+  user.paymentTransactions.push(transaction);
+  return res.status(202).json({
+    transaction,
+    message: 'Transaction submitted. Lifetime access will activate after payment verification.'
+  });
+});
+
+// POST /api/auth/google
+app.post('/api/auth/google', async (req, res) => {
+  const { credential } = req.body;
+
+  if (!process.env.GOOGLE_CLIENT_ID) {
+    return res.status(503).json({ error: 'Google sign-in is not configured on this server.' });
+  }
+
+  if (!credential) {
+    return res.status(400).json({ error: 'Google credential is required.' });
+  }
+
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+    const profile = ticket.getPayload();
+
+    if (!profile?.sub || !profile.email || profile.email_verified !== true) {
+      return res.status(401).json({ error: 'Google account could not be verified.' });
+    }
+
+    const email = profile.email.toLowerCase().trim();
+    let user = usersDb.find((candidate) => candidate.googleId === profile.sub || candidate.email === email);
+
+    if (!user) {
+      user = createUserFromGoogle({ ...profile, email });
+      usersDb.push(user);
+    } else {
+      user.googleId = profile.sub;
+      if (profile.name) user.fullName = profile.name.trim();
+      if (profile.picture) user.avatarUrl = profile.picture;
+    }
+
+    const token = `token_${user.id}_${Date.now()}`;
+    return res.json({ token, user: buildUserPayload(user) });
+  } catch (error) {
+    return res.status(401).json({ error: 'Google sign-in failed. Please try again.' });
+  }
 });
 
 // POST /api/auth/forgot-password
@@ -310,7 +439,7 @@ ${message}
   }
 });
 
-function startServer(portToTry, attempt = 1) {
+function startServer(portToTry) {
   const server = app.listen(portToTry, () => {
     console.log(`\n==================================================`);
     console.log(`  MediMate server is running on http://localhost:${portToTry}`);
@@ -319,11 +448,8 @@ function startServer(portToTry, attempt = 1) {
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {
-      if (attempt <= 3) {
-        setTimeout(() => startServer(portToTry, attempt + 1), 400);
-      } else {
-        startServer(portToTry + 1, 1);
-      }
+      console.error(`Port ${portToTry} is already in use. Stop the existing MediMate server and restart on the same port.`);
+      process.exit(1);
     } else {
       console.error('Server startup error:', err);
     }

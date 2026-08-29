@@ -53,6 +53,7 @@ MediMate is a modern, responsive healthcare web application designed to help pat
    ```env
    PORT=3000
    GEMINI_API_KEY=your_gemini_api_key_here
+   GOOGLE_CLIENT_ID=your_google_web_client_id.apps.googleusercontent.com
    ```
    *Note: If `GEMINI_API_KEY` is omitted, MediMate automatically uses its built-in rule-based offline AI assistant engine.*
 
@@ -79,6 +80,8 @@ MediMate is a modern, responsive healthcare web application designed to help pat
 | :--- | :--- | :--- | :--- |
 | `PORT` | Local Express web server port | No | `3000` |
 | `GEMINI_API_KEY` | Google Gemini API Key for AI Health Assistant | No | Rule-based engine fallback |
+| `GOOGLE_CLIENT_ID` | Google OAuth Web Client ID for patient sign-in | No | Google sign-in disabled |
+| `MEDIMATE_UPI_ID` | Public UPI ID used to create the ₹599 payment intent | No | UPI checkout disabled |
 
 ---
 

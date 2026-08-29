@@ -126,7 +126,205 @@ function initAuth() {
     checkAuthGuard();
   });
 
+  initGoogleAuth();
+  initPaymentConfig();
   checkAuthGuard();
+}
+
+async function initPaymentConfig() {
+  try {
+    const response = await fetch('/api/auth/config');
+    const config = await response.json();
+    window.MEDIMATE_UPI_ID = config.upiId || '';
+    const upiLabel = document.getElementById('paymentUpiId');
+    if (upiLabel) upiLabel.textContent = window.MEDIMATE_UPI_ID || 'Not configured';
+    renderPaymentQr();
+  } catch (error) {
+    showBillingAlert('Payment configuration could not be loaded.', 'error');
+  }
+}
+
+function renderPaymentQr() {
+  if (!window.MEDIMATE_UPI_ID) return;
+  const paymentUrl = `upi://pay?pa=${encodeURIComponent(window.MEDIMATE_UPI_ID)}&pn=${encodeURIComponent('MediMate')}&am=599&cu=INR&tn=${encodeURIComponent('MediMate lifetime access')}`;
+  const qr = document.getElementById('paymentQr');
+  if (qr) qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(paymentUrl)}`;
+}
+
+/**
+ * Initializes Google Identity Services buttons when a client ID is configured.
+ */
+async function initGoogleAuth(attempt = 0) {
+  const buttons = document.querySelectorAll('[data-google-signin]');
+  if (!buttons.length) return;
+  if (!window.google?.accounts?.id) {
+    if (attempt < 20) window.setTimeout(() => initGoogleAuth(attempt + 1), 250);
+    return;
+  }
+
+  await loadGoogleConfig();
+
+  if (!window.MEDIMATE_GOOGLE_CLIENT_ID) {
+    return;
+  }
+
+  window.google.accounts.id.initialize({
+    client_id: window.MEDIMATE_GOOGLE_CLIENT_ID,
+    callback: handleGoogleCredential,
+    auto_select: false,
+    cancel_on_tap_outside: false,
+    use_fedcm_for_prompt: false
+  });
+
+  buttons.forEach((button) => {
+    window.google.accounts.id.renderButton(button, {
+      theme: 'outline',
+      size: 'large',
+      width: Math.min(380, button.parentElement?.clientWidth || 380),
+      text: 'continue_with',
+      shape: 'rectangular'
+    });
+  });
+
+  const fallbackButton = document.getElementById('googleFallbackButton');
+  if (fallbackButton) fallbackButton.classList.add('hidden');
+
+  // GIS owns the account list and can show existing Google sessions safely.
+  window.google.accounts.id.prompt();
+}
+
+async function loadGoogleConfig() {
+  if (window.MEDIMATE_GOOGLE_CLIENT_ID) return true;
+  try {
+    const configResponse = await fetch('/api/auth/config');
+    const config = await configResponse.json();
+    window.MEDIMATE_GOOGLE_CLIENT_ID = config.googleClientId || '';
+    window.MEDIMATE_UPI_ID = config.upiId || '';
+    return Boolean(window.MEDIMATE_GOOGLE_CLIENT_ID);
+  } catch (error) {
+    return false;
+  }
+}
+
+async function startGoogleSignIn() {
+  const configured = await loadGoogleConfig();
+  if (!configured) {
+    showAuthAlert('loginAlert', 'Google sign-in is not configured on this server.', 'error');
+    return;
+  }
+
+  if (!window.google?.accounts?.id) {
+    showAuthAlert('loginAlert', 'Google sign-in is still loading. Please try again.', 'error');
+    return;
+  }
+
+  await initGoogleAuth();
+}
+
+async function startFreeTrial() {
+  if (!window.currentUser) return;
+  try {
+    const response = await fetch('/api/billing/trial', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: window.currentUser.id })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Unable to start trial.');
+    window.currentUser = data.user;
+    saveAuthUserOnly(data.user);
+    renderSubscriptionStatus();
+    showToast('Your 3-month free trial is active.', 'success');
+  } catch (error) {
+    showBillingAlert(error.message, 'error');
+  }
+}
+
+function openLifetimePayment() {
+  const upiId = window.MEDIMATE_UPI_ID || '';
+  if (!upiId) {
+    showBillingAlert('Add MEDIMATE_UPI_ID to .env before accepting payments.', 'error');
+    return;
+  }
+
+  const paymentUrl = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent('MediMate')}&am=599&cu=INR&tn=${encodeURIComponent('MediMate lifetime access')}`;
+  window.location.href = paymentUrl;
+  showBillingAlert('Complete the INR 599 payment in your UPI app. Lifetime access is activated only after payment verification.', 'success');
+}
+
+async function submitUpiTransaction(event) {
+  event.preventDefault();
+  if (!window.currentUser) return;
+  const input = document.getElementById('upiTransactionId');
+  const transactionId = input.value.trim();
+  try {
+    const response = await fetch('/api/billing/upi-transaction', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: window.currentUser.id, transactionId })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Transaction submission failed.');
+    input.value = '';
+    showBillingAlert(`${data.message} Reference: ${data.transaction.transactionId}`, 'success');
+  } catch (error) {
+    showBillingAlert(error.message, 'error');
+  }
+}
+
+function saveAuthUserOnly(user) {
+  const storage = localStorage.getItem('medimate_user') ? localStorage : sessionStorage;
+  storage.setItem('medimate_user', JSON.stringify(user));
+}
+
+function showBillingAlert(message, type) {
+  const alert = document.getElementById('billingAlert');
+  if (alert) {
+    alert.className = `auth-alert auth-alert-${type}`;
+    alert.textContent = message;
+    alert.classList.remove('hidden');
+  }
+}
+
+function renderSubscriptionStatus() {
+  const status = document.getElementById('subscriptionStatus');
+  if (!status || !window.currentUser) return;
+  if (window.currentUser.subscriptionStatus === 'lifetime') {
+    status.textContent = 'Lifetime access is active.';
+    return;
+  }
+  const end = window.currentUser.trialEndsAt ? new Date(window.currentUser.trialEndsAt) : null;
+  status.textContent = end && !Number.isNaN(end.valueOf())
+    ? `Free trial active until ${end.toLocaleDateString()}.`
+    : 'Three-month free trial available.';
+}
+
+async function handleGoogleCredential(response) {
+  const signupScreen = document.getElementById('signupScreen');
+  if (signupScreen && !signupScreen.classList.contains('hidden') && !document.getElementById('signupTerms').checked) {
+    showAuthAlert('signupAlert', 'Please accept the Terms & Privacy Policy.', 'error');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential: response.credential })
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Google sign-in failed.');
+
+    saveAuthSession(data.token, data.user, true);
+    showToast(`Welcome, ${data.user.fullName}!`, 'success');
+    window.location.hash = '#dashboard';
+    checkAuthGuard();
+    if (window.refreshAllViews) window.refreshAllViews();
+  } catch (error) {
+    const alertId = signupScreen && !signupScreen.classList.contains('hidden') ? 'signupAlert' : 'loginAlert';
+    showAuthAlert(alertId, error.message, 'error');
+  }
 }
 
 /**
@@ -183,6 +381,125 @@ function togglePasswordVisibility(inputId, iconId) {
   }
 }
 
+let otpTimerId = null;
+let otpSecondsRemaining = 0;
+
+function switchLoginMethod(method) {
+  const passwordMode = method === 'password';
+  const passwordPanel = document.getElementById('passwordLoginPanel');
+  const otpPanel = document.getElementById('otpLoginPanel');
+  const passwordTab = document.getElementById('passwordTab');
+  const otpTab = document.getElementById('otpTab');
+
+  passwordPanel.classList.toggle('hidden', !passwordMode);
+  otpPanel.classList.toggle('hidden', passwordMode);
+  passwordTab.classList.toggle('active', passwordMode);
+  otpTab.classList.toggle('active', !passwordMode);
+  passwordTab.setAttribute('aria-selected', String(passwordMode));
+  otpTab.setAttribute('aria-selected', String(!passwordMode));
+  clearAuthAlerts();
+  if (!passwordMode) document.getElementById('otpMobile').focus();
+}
+
+function validateOtpMobile() {
+  const mobile = document.getElementById('otpMobile').value.replace(/\D/g, '');
+  const error = document.getElementById('otpMobileError');
+  document.getElementById('otpMobile').value = mobile;
+  if (!/^\d{10}$/.test(mobile)) {
+    error.textContent = 'Enter a valid 10-digit mobile number.';
+    return false;
+  }
+  error.textContent = '';
+  return true;
+}
+
+function sendOtp(event) {
+  event.preventDefault();
+  if (!validateOtpMobile()) return;
+
+  const sendButton = document.getElementById('sendOtpBtn');
+  sendButton.disabled = true;
+  sendButton.innerHTML = '<span>OTP Sent</span>';
+  document.getElementById('otpVerifyPanel').classList.remove('hidden');
+  document.querySelector('.otp-digit').focus();
+  startOtpCountdown();
+}
+
+function startOtpCountdown() {
+  clearInterval(otpTimerId);
+  otpSecondsRemaining = 30;
+  const countdown = document.getElementById('otpCountdown');
+  const resendButton = document.getElementById('resendOtpBtn');
+  resendButton.disabled = true;
+  countdown.textContent = `Resend available in ${otpSecondsRemaining}s`;
+  otpTimerId = setInterval(() => {
+    otpSecondsRemaining -= 1;
+    if (otpSecondsRemaining <= 0) {
+      clearInterval(otpTimerId);
+      countdown.textContent = 'You can request a new code.';
+      resendButton.disabled = false;
+    } else {
+      countdown.textContent = `Resend available in ${otpSecondsRemaining}s`;
+    }
+  }, 1000);
+}
+
+function resendOtp() {
+  if (!validateOtpMobile()) return;
+  document.querySelectorAll('.otp-digit').forEach((input) => { input.value = ''; });
+  document.querySelector('.otp-digit').focus();
+  document.getElementById('otpError').textContent = '';
+  startOtpCountdown();
+}
+
+function verifyOtp() {
+  const digits = [...document.querySelectorAll('.otp-digit')].map((input) => input.value).join('');
+  const error = document.getElementById('otpError');
+  if (digits.length !== 6 || !/^\d{6}$/.test(digits)) {
+    error.textContent = 'Enter all 6 digits of the OTP.';
+    return;
+  }
+  if (digits !== '123456') {
+    error.textContent = 'Invalid or expired OTP. Use 123456 for this demo.';
+    return;
+  }
+
+  setAuthLoadingState('verifyOtpBtn', true, 'Verifying...');
+  setTimeout(() => {
+    const mobile = document.getElementById('otpMobile').value;
+    const countryCode = document.getElementById('otpCountryCode').value;
+    const fullName = `MediMate User ${mobile.slice(-4)}`;
+    const user = {
+      ...DEFAULT_DEMO_USER,
+      id: `otp-${Date.now()}`,
+      fullName,
+      email: `${countryCode.replace('+', '')}${mobile}@otp.medimate.local`,
+      phone: `${countryCode} ${mobile}`,
+      avatarInitials: fullName.slice(-2)
+    };
+    setAuthLoadingState('verifyOtpBtn', false, 'Verify & Login');
+    saveAuthSession(`otp_token_${user.id}`, user, true);
+    showToast(`Welcome, ${user.fullName}!`, 'success');
+    window.location.hash = '#dashboard';
+    checkAuthGuard();
+    if (window.refreshAllViews) window.refreshAllViews();
+  }, 650);
+}
+
+function setupOtpInputs() {
+  document.querySelectorAll('.otp-digit').forEach((input, index, inputs) => {
+    input.addEventListener('input', () => {
+      input.value = input.value.replace(/\D/g, '').slice(-1);
+      if (input.value && inputs[index + 1]) inputs[index + 1].focus();
+    });
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Backspace' && !input.value && inputs[index - 1]) inputs[index - 1].focus();
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', setupOtpInputs);
+
 /**
  * Handles User Login Submit.
  */
@@ -213,6 +530,11 @@ async function handleLogin(event) {
     return;
   }
 
+  if (password.length < 6) {
+    showAuthAlert('loginAlert', 'Password must be at least 6 characters.', 'error');
+    return;
+  }
+
   setAuthLoadingState('loginBtn', true, 'Logging in...');
 
   try {
@@ -233,28 +555,10 @@ async function handleLogin(event) {
       if (window.refreshAllViews) window.refreshAllViews();
     } else {
       const errorData = await res.json();
-      // Offline Demo Fallback if matching demo credentials
-      if (email.toLowerCase() === DEFAULT_DEMO_USER.email && password === 'Password123!') {
-        saveAuthSession('demo_token_8492', DEFAULT_DEMO_USER, rememberMe);
-        showToast('Logged in as Demo User.', 'success');
-        window.location.hash = '#dashboard';
-        checkAuthGuard();
-        if (window.refreshAllViews) window.refreshAllViews();
-        return;
-      }
       showAuthAlert('loginAlert', errorData.error || 'Invalid email or password.', 'error');
     }
   } catch (err) {
     setAuthLoadingState('loginBtn', false, 'Sign In');
-    // Fallback offline login for test user
-    if (email.toLowerCase() === DEFAULT_DEMO_USER.email && password === 'Password123!') {
-      saveAuthSession('demo_token_8492', DEFAULT_DEMO_USER, rememberMe);
-      showToast('Logged in as Demo User.', 'success');
-      window.location.hash = '#dashboard';
-      checkAuthGuard();
-      if (window.refreshAllViews) window.refreshAllViews();
-      return;
-    }
     showAuthAlert('loginAlert', 'Network connection error. Please try again.', 'error');
   }
 }
@@ -270,6 +574,7 @@ async function handleSignup(event) {
   const password = document.getElementById('signupPassword').value;
   const confirmPassword = document.getElementById('signupConfirmPassword').value;
   const phone = document.getElementById('signupPhone').value.trim();
+  const countryCode = document.getElementById('signupCountryCode').value;
   const terms = document.getElementById('signupTerms').checked;
 
   if (!fullName) {
@@ -313,7 +618,7 @@ async function handleSignup(event) {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fullName, email, password, phone })
+      body: JSON.stringify({ fullName, email, password, phone: phone ? `${countryCode} ${phone}` : '' })
     });
 
     setAuthLoadingState('signupBtn', false, 'Create Account');
@@ -670,8 +975,14 @@ window.checkAuthGuard = checkAuthGuard;
 window.handleRouteHash = handleRouteHash;
 window.showAuthView = showAuthView;
 window.togglePasswordVisibility = togglePasswordVisibility;
+window.startGoogleSignIn = startGoogleSignIn;
+window.switchLoginMethod = switchLoginMethod;
+window.sendOtp = sendOtp;
+window.resendOtp = resendOtp;
+window.verifyOtp = verifyOtp;
 window.handleLogin = handleLogin;
 window.handleSignup = handleSignup;
+window.handleGoogleCredential = handleGoogleCredential;
 window.handleForgotPassword = handleForgotPassword;
 window.handleLogout = handleLogout;
 window.toggleProfileDropdown = toggleProfileDropdown;
@@ -681,4 +992,8 @@ window.saveProfileEdits = saveProfileEdits;
 window.handleAvatarUpload = handleAvatarUpload;
 window.removeAvatar = removeAvatar;
 window.renderProfileView = renderProfileView;
+window.startFreeTrial = startFreeTrial;
+window.openLifetimePayment = openLifetimePayment;
+window.submitUpiTransaction = submitUpiTransaction;
+window.renderSubscriptionStatus = renderSubscriptionStatus;
 
