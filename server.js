@@ -24,12 +24,27 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const usersFile = path.join(__dirname, 'data', 'users.json');
-const usersDb = fs.existsSync(usersFile) ? JSON.parse(fs.readFileSync(usersFile, 'utf8')) : [];
+const isVercel = Boolean(process.env.VERCEL);
+const usersFile = isVercel
+  ? path.join('/tmp', 'users.json')
+  : path.join(__dirname, 'data', 'users.json');
+
+let usersDb = [];
+try {
+  if (fs.existsSync(usersFile)) {
+    usersDb = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
+  }
+} catch (err) {
+  usersDb = [];
+}
 
 function persistUsers() {
-  fs.mkdirSync(path.dirname(usersFile), { recursive: true });
-  fs.writeFileSync(usersFile, JSON.stringify(usersDb, null, 2));
+  try {
+    fs.mkdirSync(path.dirname(usersFile), { recursive: true });
+    fs.writeFileSync(usersFile, JSON.stringify(usersDb, null, 2));
+  } catch (err) {
+    console.warn('Could not write users.json:', err.message);
+  }
 }
 
 function buildUserPayload(user) {
@@ -195,8 +210,9 @@ app.post('/api/billing/upi-transaction', (req, res) => {
 // POST /api/auth/google
 app.post('/api/auth/google', async (req, res) => {
   const { credential } = req.body;
+  const activeClientId = process.env.GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID;
 
-  if (!process.env.GOOGLE_CLIENT_ID) {
+  if (!activeClientId) {
     return res.status(503).json({ error: 'Google sign-in is not configured on this server.' });
   }
 
@@ -207,7 +223,7 @@ app.post('/api/auth/google', async (req, res) => {
   try {
     const ticket = await googleClient.verifyIdToken({
       idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID
+      audience: activeClientId
     });
     const profile = ticket.getPayload();
 
@@ -444,7 +460,7 @@ ${message}
   }
 });
 
-function startServer(portToTry) {
+export function startServer(portToTry) {
   const server = app.listen(portToTry, () => {
     console.log(`\n==================================================`);
     console.log(`  MediMate server is running on http://localhost:${portToTry}`);
@@ -459,6 +475,12 @@ function startServer(portToTry) {
       console.error('Server startup error:', err);
     }
   });
+
+  return server;
 }
 
-startServer(DEFAULT_PORT);
+if (!process.env.VERCEL) {
+  startServer(DEFAULT_PORT);
+}
+
+export default app;

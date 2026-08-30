@@ -1266,6 +1266,7 @@ function getCategoryColor(category) {
 }
 
 /**
+ * 
  * Custom Alarm Ringtone Audio Upload Handler.
  * Validates audio file size (max 3.5 MB) and duration (max 60 sec).
  */
@@ -1512,4 +1513,3 @@ window.handleCustomRingtoneUpload = handleCustomRingtoneUpload;
 window.removeCustomRingtone = removeCustomRingtone;
 window.syncAmPmFromTime = syncAmPmFromTime;
 window.syncTimeFromAmPm = syncTimeFromAmPm;
-

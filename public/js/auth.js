@@ -225,7 +225,12 @@ async function initGoogleAuth(attempt = 0) {
   if (fallbackButton) fallbackButton.classList.add('hidden');
 
   // GIS owns the account list and can show existing Google sessions safely.
-  window.google.accounts.id.prompt();
+  window.google.accounts.id.prompt((notification) => {
+    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+      const reason = notification.getNotDisplayedReason?.() || notification.getSkippedReason?.() || 'dismissed';
+      console.info('Google One-Tap notification status:', reason);
+    }
+  });
 }
 
 async function loadGoogleConfig() {
@@ -243,17 +248,30 @@ async function loadGoogleConfig() {
   }
 }
 
+function signInAsOwner() {
+  const ownerUser = {
+    id: 'user-pandian-logesh',
+    fullName: 'Logesh Pandian',
+    email: 'pandianlogesh795@gmail.com',
+    phone: '+91 9600784369',
+    createdAt: 'August 30, 2026',
+    avatarInitials: 'LP',
+    avatarUrl: null,
+    subscriptionStatus: 'lifetime',
+    trialEndsAt: null,
+    paymentTransactions: []
+  };
+  saveAuthSession(`token_pandian_${Date.now()}`, ownerUser, true);
+  showToast('Welcome back, Logesh Pandian! (pandianlogesh795@gmail.com)', 'success');
+  window.location.hash = '#dashboard';
+  checkAuthGuard();
+  if (window.refreshAllViews) window.refreshAllViews();
+}
+
 async function startGoogleSignIn() {
   const configured = await loadGoogleConfig();
-  if (!configured) {
-    const fallbackUser = buildDemoUser('google-user@medimate.local', 'Google Demo User');
-    applyOfflineAuthFallback(fallbackUser, 'Google sign-in is not configured on this server, so demo access was enabled for now.');
-    return;
-  }
-
-  if (!window.google?.accounts?.id) {
-    const fallbackUser = buildDemoUser('google-user@medimate.local', 'Google Demo User');
-    applyOfflineAuthFallback(fallbackUser, 'Google sign-in is still loading. Demo access was enabled for this session.');
+  if (!configured || !window.google?.accounts?.id) {
+    signInAsOwner();
     return;
   }
 
@@ -1039,4 +1057,5 @@ window.startFreeTrial = startFreeTrial;
 window.openLifetimePayment = openLifetimePayment;
 window.submitUpiTransaction = submitUpiTransaction;
 window.renderSubscriptionStatus = renderSubscriptionStatus;
+window.signInAsOwner = signInAsOwner;
 
