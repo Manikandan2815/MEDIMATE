@@ -14,7 +14,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const DEFAULT_PORT = parseInt(process.env.PORT || '3000', 10);
-const DEFAULT_GOOGLE_CLIENT_ID = '721624148499-tpkd4s251j1qskobmi4f2euiqq01k5e2.apps.googleusercontent.com';
+const DEFAULT_GOOGLE_CLIENT_ID = '721624148499-0acpn5216hqu6u5tv5i5pt8jts79mkbk.apps.googleusercontent.com';
 const DEFAULT_UPI_ID = 'pandianlogesh795@okicici';
 const googleClient = new OAuth2Client();
 const TRIAL_MONTHS = 3;
@@ -405,7 +405,7 @@ function generateRuleBasedReply(message, medications = []) {
   return `Hello! I am your MediMate AI Health Assistant. I am tracking your medication cabinet (${medications.length} items registered).\n\nYou can ask me:\n- "What medicines do I have today?"\n- "Which medicines are pending?"\n- "Which medicine has low stock?"\n- "What is scheduled tonight?"\n\n*Note: I provide general information only. Always consult your doctor for medical advice.*`;
 }
 
-app.post('/api/health-assistant/', async (req, res) => {
+app.post(['/api/health-assistant', '/api/health-assistant/'], async (req, res) => {
   try {
     const { message, medications } = req.body;
 
@@ -430,26 +430,35 @@ USER QUESTION:
 ${message}
 `;
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const modelsToTry = [process.env.GEMINI_MODEL, 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'].filter(Boolean);
+    let replyText = null;
 
-    const geminiRes = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: promptContext }] }]
-      })
-    });
+    for (const model of modelsToTry) {
+      try {
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const geminiRes = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: promptContext }] }]
+          })
+        });
 
-    if (!geminiRes.ok) {
-      const reply = generateRuleBasedReply(message, medications);
-      return res.json({ reply });
+        if (geminiRes.ok) {
+          const data = await geminiRes.json();
+          const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (candidateText) {
+            replyText = candidateText;
+            break;
+          }
+        }
+      } catch (err) {
+        // try next model
+      }
     }
 
-    const data = await geminiRes.json();
-    const candidateText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (candidateText) {
-      return res.json({ reply: candidateText });
+    if (replyText) {
+      return res.json({ reply: replyText });
     } else {
       const reply = generateRuleBasedReply(message, medications);
       return res.json({ reply });
