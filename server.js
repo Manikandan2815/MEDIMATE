@@ -13,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const DEFAULT_PORT = parseInt(process.env.PORT || '3000', 10);
+const DEFAULT_PORT = parseInt(process.env.PORT || '8080', 10);
 const DEFAULT_GOOGLE_CLIENT_ID = '721624148499-0acpn5216hqu6u5tv5i5pt8jts79mkbk.apps.googleusercontent.com';
 const DEFAULT_UPI_ID = 'pandianlogesh795@okicici';
 const googleClient = new OAuth2Client();
@@ -405,7 +405,7 @@ function generateRuleBasedReply(message, medications = []) {
   return `Hello! I am your MediMate AI Health Assistant. I am tracking your medication cabinet (${medications.length} items registered).\n\nYou can ask me:\n- "What medicines do I have today?"\n- "Which medicines are pending?"\n- "Which medicine has low stock?"\n- "What is scheduled tonight?"\n\n*Note: I provide general information only. Always consult your doctor for medical advice.*`;
 }
 
-app.post(['/api/health-assistant', '/api/health-assistant/'], async (req, res) => {
+app.post(['/api/chat', '/api/chat/'], async (req, res) => {
   try {
     const { message, medications } = req.body;
 

@@ -11,10 +11,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles.css?v=3">
+  <link rel="stylesheet" href="css/modern-theme.css?v=3">
 </head>
 <body class="dark-theme">
+  <a href="#main-content" class="skip-to-content">Skip to main content</a>
 
   <!-- 6 to 7 SECOND INTRODUCTORY OPENING SPLASH ANIMATION OVERLAY -->
   <div id="splashScreen" class="splash-screen-overlay">
@@ -150,14 +151,9 @@
         </form>
 
         <div class="google-auth-divider"><span>or</span></div>
-        <div class="google-signin-button" data-google-signin></div>
-        <button type="button" id="googleFallbackButton" class="google-fallback-button" onclick="startGoogleSignIn()">
-          <span class="google-brand-mark">G</span>
-          <span>Continue with Google</span>
-        </button>
         <button type="button" class="google-fallback-button margin-top-xs" style="background: rgba(176, 38, 255, 0.08); border-color: rgba(176, 38, 255, 0.4); color: #e2e8f0;" onclick="signInAsOwner()">
           <i data-lucide="zap" style="width: 17px; height: 17px; color: #b026ff;"></i>
-          <span>Instant Access as pandianlogesh795@gmail.com</span>
+          <span>Try Demo Account</span>
         </button>
 
         <div class="auth-footer-link text-center margin-top-md">
@@ -253,10 +249,9 @@
         </form>
 
         <div class="google-auth-divider"><span>or</span></div>
-        <div class="google-signin-button" data-google-signin></div>
         <button type="button" class="google-fallback-button margin-top-xs" style="background: rgba(176, 38, 255, 0.08); border-color: rgba(176, 38, 255, 0.4); color: #e2e8f0;" onclick="signInAsOwner()">
           <i data-lucide="zap" style="width: 17px; height: 17px; color: #b026ff;"></i>
-          <span>Instant Access as pandianlogesh795@gmail.com</span>
+          <span>Try Demo Account</span>
         </button>
 
         <div class="auth-footer-link text-center margin-top-md">
@@ -388,7 +383,7 @@
     </aside>
 
     <!-- Main Content Area -->
-    <main class="main-wrapper">
+    <main id="main-content" class="main-wrapper" tabindex="-1">
       <!-- Header -->
       <header class="top-header">
         <div class="header-left">
@@ -525,81 +520,53 @@
             </div>
           </section>
 
-          <!-- Summary Cards Grid -->
-          <div class="summary-cards-grid">
-            <div class="card summary-card glow-teal">
-              <div class="card-icon icon-teal">
-                <i data-lucide="calendar-check"></i>
-              </div>
-              <div class="card-details">
-                <span class="card-label" data-i18n="statTodayDoses">Today's Doses</span>
-                <h3 id="statTodayDoses" class="card-value">0</h3>
-              </div>
+          <!-- Summary Metrics - Editorial Layout -->
+          <div class="editorial-metrics">
+            <div class="metric-item">
+              <span class="metric-label" data-i18n="statTodayDoses">Today's Doses</span>
+              <h3 id="statTodayDoses" class="metric-value">0</h3>
             </div>
-
-            <div class="card summary-card glow-green">
-              <div class="card-icon icon-green">
-                <i data-lucide="check-circle-2"></i>
-              </div>
-              <div class="card-details">
-                <span class="card-label" data-i18n="statTaken">Taken</span>
-                <h3 id="statTakenDoses" class="card-value">0</h3>
-              </div>
+            <div class="metric-item">
+              <span class="metric-label" data-i18n="statTaken">Taken</span>
+              <h3 id="statTakenDoses" class="metric-value">0</h3>
             </div>
-
-            <div class="card summary-card glow-amber">
-              <div class="card-icon icon-amber">
-                <i data-lucide="clock"></i>
-              </div>
-              <div class="card-details">
-                <span class="card-label" data-i18n="statPending">Pending</span>
-                <h3 id="statPendingDoses" class="card-value">0</h3>
-              </div>
+            <div class="metric-item">
+              <span class="metric-label" data-i18n="statPending">Pending</span>
+              <h3 id="statPendingDoses" class="metric-value">0</h3>
             </div>
-
-            <div class="card summary-card glow-indigo">
-              <div class="card-icon icon-indigo">
-                <i data-lucide="activity"></i>
-              </div>
-              <div class="card-details">
-                <span class="card-label" data-i18n="statAdherenceRate">Adherence Rate</span>
-                <h3 id="statAdherenceRate" class="card-value">0%</h3>
-              </div>
+            <div class="metric-item">
+              <span class="metric-label" data-i18n="statAdherenceRate">Adherence Rate</span>
+              <h3 id="statAdherenceRate" class="metric-value">0%</h3>
             </div>
-
-            <div class="card summary-card glow-rose">
-              <div class="card-icon icon-rose">
-                <i data-lucide="alert-triangle"></i>
-              </div>
-              <div class="card-details">
-                <span class="card-label" data-i18n="statLowStock">Low Stock</span>
-                <h3 id="statLowStock" class="card-value">0</h3>
-              </div>
+            <div class="metric-item">
+              <span class="metric-label" data-i18n="statLowStock">Low Stock</span>
+              <h3 id="statLowStock" class="metric-value">0</h3>
             </div>
           </div>
 
-          <!-- Filter & Search Toolbar -->
-          <div class="toolbar-section">
-            <div class="search-box">
-              <i data-lucide="search" class="search-icon"></i>
-              <input type="text" id="dashboardSearch" placeholder="Search by name, dosage, or category..." data-i18n-placeholder="searchPlaceholder" oninput="handleSearchFilter()">
+          <div class="spatial-schedule-section">
+            <div class="editorial-header">
+              <div class="header-titles">
+                <h2 data-i18n="todaysScheduleTitle">Today's Schedule</h2>
+                <span class="editorial-badge" id="scheduleCountBadge">0 Scheduled</span>
+              </div>
+              
+              <!-- Filter & Search Toolbar -->
+              <div class="toolbar-section">
+                <div class="search-box">
+                  <i data-lucide="search" class="search-icon"></i>
+                  <input type="text" id="dashboardSearch" placeholder="Search by name, dosage, or category..." data-i18n-placeholder="searchPlaceholder" oninput="handleSearchFilter()">
+                </div>
+                <div class="filter-pills">
+                  <button class="filter-pill active" data-filter="all" onclick="setFilter('all')" data-i18n="filterAll">All</button>
+                  <button class="filter-pill" data-filter="pending" onclick="setFilter('pending')" data-i18n="filterPending">Pending</button>
+                  <button class="filter-pill" data-filter="taken" onclick="setFilter('taken')" data-i18n="filterTaken">Taken</button>
+                  <button class="filter-pill" data-filter="low-stock" onclick="setFilter('low-stock')" data-i18n="filterLowStock">Low Stock</button>
+                </div>
+              </div>
             </div>
-            <div class="filter-pills">
-              <button class="filter-pill active" data-filter="all" onclick="setFilter('all')" data-i18n="filterAll">All</button>
-              <button class="filter-pill" data-filter="pending" onclick="setFilter('pending')" data-i18n="filterPending">Pending</button>
-              <button class="filter-pill" data-filter="taken" onclick="setFilter('taken')" data-i18n="filterTaken">Taken</button>
-              <button class="filter-pill" data-filter="low-stock" onclick="setFilter('low-stock')" data-i18n="filterLowStock">Low Stock</button>
-            </div>
-          </div>
 
-          <!-- Today's Medication Schedule Section -->
-          <div class="section-card">
-            <div class="section-header">
-              <h2 data-i18n="todaysScheduleTitle">Today's Medication Schedule</h2>
-              <span class="badge badge-info" id="scheduleCountBadge">0 Scheduled</span>
-            </div>
-
-            <div id="scheduleContainer" class="medication-list">
+            <div id="scheduleContainer" class="medication-list spatial-med-list">
               <!-- Rendered dynamically -->
             </div>
           </div>
@@ -1104,7 +1071,7 @@
   </div>
 
   <!-- ADD MEDICATION MODAL -->
-  <div id="addModal" class="modal-overlay">
+  <div id="addModal" class="modal-overlay" role="dialog" aria-modal="true">
     <div class="modal-card">
       <div class="modal-header">
         <h3 data-i18n="addNewMedicine">Add New Medication</h3>
@@ -1169,7 +1136,7 @@
   </div>
 
   <!-- EDIT MEDICATION MODAL -->
-  <div id="editModal" class="modal-overlay">
+  <div id="editModal" class="modal-overlay" role="dialog" aria-modal="true">
     <div class="modal-card">
       <div class="modal-header">
         <h3 data-i18n="editMedication">Edit Medication</h3>
@@ -1235,7 +1202,7 @@
   </div>
 
   <!-- EDIT PROFILE MODAL -->
-  <div id="editProfileModal" class="modal-overlay">
+  <div id="editProfileModal" class="modal-overlay" role="dialog" aria-modal="true">
     <div class="modal-card">
       <div class="modal-header">
         <h3>Edit Profile Details</h3>
@@ -1280,7 +1247,7 @@
   </div>
 
   <!-- ALARM REMINDER MODAL -->
-  <div id="alarmModal" class="modal-overlay alarm-modal-overlay">
+  <div id="alarmModal" class="modal-overlay alarm-modal-overlay" role="alertdialog" aria-modal="true">
     <div class="modal-card alarm-modal-card">
       <div class="alarm-header-pulse">
         <i data-lucide="bell" class="alarm-bell-icon"></i>
@@ -1304,7 +1271,7 @@
   </div>
 
   <!-- DELETE CONFIRMATION MODAL -->
-  <div id="deleteModal" class="modal-overlay">
+  <div id="deleteModal" class="modal-overlay" role="dialog" aria-modal="true">
     <div class="modal-card confirm-modal-card">
       <div class="confirm-icon danger-icon">
         <i data-lucide="trash-2"></i>
@@ -1320,7 +1287,7 @@
   </div>
 
   <!-- DEDICATED ALL NOTIFICATIONS MODAL -->
-  <div id="allNotificationsModal" class="modal-overlay">
+  <div id="allNotificationsModal" class="modal-overlay" role="dialog" aria-modal="true">
     <div class="modal-card modal-card-lg">
       <div class="modal-header">
         <div class="modal-header-title-group">
@@ -1356,7 +1323,7 @@
   </div>
 
   <!-- DEDICATED NOTIFICATION SETTINGS MODAL -->
-  <div id="notificationSettingsModal" class="modal-overlay">
+  <div id="notificationSettingsModal" class="modal-overlay" role="dialog" aria-modal="true">
     <div class="modal-card">
       <div class="modal-header">
         <div class="modal-header-title-group">

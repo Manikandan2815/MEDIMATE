@@ -6,7 +6,7 @@ let splashTimer = null;
 let sloganInterval = null;
 let progressInterval = null;
 
-const SPLASH_DURATION_MS = 6500; // 6.5 seconds total opening sequence
+const SPLASH_DURATION_MS = 3000; // 3 seconds total opening sequence
 
 // Attractive health slogans to sequence during opening animation
 const ATTRACTIVE_SLOGANS = [
@@ -22,6 +22,13 @@ function initSplashScreen() {
   const splashOverlay = document.getElementById('splashScreen');
   if (!splashOverlay) return;
 
+  // Show only on first visit in the session
+  if (sessionStorage.getItem('splashShown')) {
+    splashOverlay.style.display = 'none';
+    return;
+  }
+  sessionStorage.setItem('splashShown', 'true');
+
   // Ensure visible
   splashOverlay.style.display = 'flex';
   splashOverlay.classList.remove('splash-fade-out');
@@ -35,7 +42,7 @@ function initSplashScreen() {
     sloganEl.classList.add('splash-text-animate');
   }
 
-  // Slogan rotation sequence: rotate words every ~2.1 seconds
+  // Slogan rotation sequence: rotate words every ~1 second
   sloganInterval = setInterval(() => {
     sloganIndex = (sloganIndex + 1) % ATTRACTIVE_SLOGANS.length;
     if (sloganEl) {
@@ -45,7 +52,7 @@ function initSplashScreen() {
       sloganEl.textContent = ATTRACTIVE_SLOGANS[sloganIndex];
       sloganEl.classList.add('splash-text-animate');
     }
-  }, 2100);
+  }, 1000);
 
   // Smooth Progress Bar fill animation
   let startTime = Date.now();

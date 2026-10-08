@@ -5,7 +5,7 @@
 window.currentUser = null;
 window.authToken = null;
 
-const FALLBACK_GOOGLE_CLIENT_ID = '721624148499-0acpn5216hqu6u5tv5i5pt8jts79mkbk.apps.googleusercontent.com';
+const FALLBACK_GOOGLE_CLIENT_ID = '721624148499-hmgfb5o3ue71phk1mi3ss5mmrlftv06e.apps.googleusercontent.com';
 const FALLBACK_UPI_ID = 'pandianlogesh795@okicici';
 
 // Default Seed Demo User for offline fallback

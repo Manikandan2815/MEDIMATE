@@ -73,7 +73,7 @@ function renderChatHistoryUI() {
 }
 
 /**
- * Sends a chat message to the Express AI backend (/api/health-assistant/).
+ * Sends a chat message to the Express AI backend (/api/chat).
  */
 async function sendChatMessage() {
   const inputEl = document.getElementById('chatInput');
@@ -107,7 +107,7 @@ async function sendChatMessage() {
       stock: m.stock
     }));
 
-    const response = await fetch('/api/health-assistant/', {
+    const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

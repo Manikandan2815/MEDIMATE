@@ -1150,9 +1150,51 @@ function confirmDeleteMedication() {
 /**
  * Modal Controls.
  */
-function openModal(modalId) {
+let previouslyFocusedElement = null;
+
+function trapFocus(modalId) {
   const modal = document.getElementById(modalId);
-  if (modal) modal.classList.add('active');
+  if (!modal) return;
+  const focusableElementsString = 'a[href], area[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [tabindex="0"], [contenteditable]';
+  let focusableElements = modal.querySelectorAll(focusableElementsString);
+  focusableElements = Array.prototype.slice.call(focusableElements);
+  
+  if (focusableElements.length === 0) return;
+
+  const firstTabStop = focusableElements[0];
+  const lastTabStop = focusableElements[focusableElements.length - 1];
+
+  firstTabStop.focus();
+
+  modal.addEventListener('keydown', function(e) {
+    if (e.key === 'Tab') {
+      if (e.shiftKey) {
+        if (document.activeElement === firstTabStop) {
+          e.preventDefault();
+          lastTabStop.focus();
+        }
+      } else {
+        if (document.activeElement === lastTabStop) {
+          e.preventDefault();
+          firstTabStop.focus();
+        }
+      }
+    }
+    if (e.key === 'Escape') {
+      closeModal(modalId);
+    }
+  });
+}
+
+function openModal(modalId) {
+  previouslyFocusedElement = document.activeElement;
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.add('active');
+    // Ensure modal display is fully updated before focusing
+    setTimeout(() => trapFocus(modalId), 10);
+  }
+  
   if (modalId === 'addModal') {
     const timeInput = document.getElementById('addMedTime');
     if (timeInput && !timeInput.value) {
@@ -1165,6 +1207,10 @@ function openModal(modalId) {
 function closeModal(modalId) {
   const modal = document.getElementById(modalId);
   if (modal) modal.classList.remove('active');
+  if (previouslyFocusedElement) {
+    previouslyFocusedElement.focus();
+    previouslyFocusedElement = null;
+  }
 }
 
 /**

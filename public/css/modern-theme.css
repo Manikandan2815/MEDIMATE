@@ -1,0 +1,563 @@
+/* MediMate Premium Clinical Theme Override */
+
+:root {
+  /* Slate/Zinc Premium Dark Palette */
+  --bg-dark: #09090b;       /* zinc-950: Deep, true dark background */
+  --bg-sidebar: #18181b;    /* zinc-900: Sidebar */
+  --bg-card: #18181b;       /* zinc-900: Solid cards */
+  --bg-card-hover: #27272a; /* zinc-800: Interactive */
+  
+  --border-color: #27272a;  /* zinc-800 */
+  --border-highlight: #3f3f46; /* zinc-700 */
+
+  /* Healthcare Teal / Sky Blue Accent */
+  --primary-teal: #0ea5e9;       /* sky-500: Professional medical blue */
+  --primary-teal-hover: #0284c7; /* sky-600 */
+  --primary-teal-light: rgba(14, 165, 233, 0.1);
+
+  --text-main: #f8fafc;
+  --text-secondary: #a1a1aa; /* zinc-400 */
+  --text-muted: #71717a;     /* zinc-500 */
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+}
+
+body {
+  background-color: var(--bg-dark) !important;
+  color: var(--text-main) !important;
+  font-family: 'Inter', -apple-system, sans-serif !important;
+}
+
+/* Premium Cards */
+.card, .section-card, .auth-card-wrapper, .modal-card, 
+.profile-dropdown-menu, .notification-dropdown-panel, .medication-card, .history-card {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: 0 4px 20px -2px rgba(0,0,0,0.4) !important;
+  border-radius: var(--radius-lg) !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.card:hover, .medication-card:hover {
+  background: var(--bg-card-hover) !important;
+  border-color: var(--border-highlight) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 30px -4px rgba(0,0,0,0.5) !important;
+}
+
+/* Inputs and Forms */
+input, select, textarea, .search-box input {
+  background: #09090b !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-md) !important;
+  color: var(--text-main) !important;
+  padding: 0.85rem 1.15rem !important;
+  transition: all 0.2s ease !important;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--primary-teal) !important;
+  box-shadow: 0 0 0 3px var(--primary-teal-light) !important;
+  outline: none !important;
+}
+
+/* Premium Buttons */
+.primary-btn {
+  background: linear-gradient(135deg, #0ea5e9, #0284c7) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: var(--radius-md) !important;
+  padding: 0.85rem 1.5rem !important;
+  font-weight: 500 !important;
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25) !important;
+  text-shadow: none !important;
+}
+.primary-btn:hover {
+  background: linear-gradient(135deg, #38bdf8, #0ea5e9) !important;
+  box-shadow: 0 6px 16px rgba(14, 165, 233, 0.35) !important;
+}
+.secondary-btn {
+  background: transparent !important;
+  border: 1px solid var(--border-highlight) !important;
+  color: var(--text-main) !important;
+  border-radius: var(--radius-md) !important;
+}
+.secondary-btn:hover {
+  background: var(--bg-card-hover) !important;
+  border-color: #52525b !important; /* zinc-600 */
+}
+
+/* Badges */
+.badge {
+  padding: 0.35rem 0.85rem !important;
+  border-radius: 9999px !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* Sidebar and Navigation */
+.sidebar {
+  background: var(--bg-sidebar) !important;
+  border-right: 1px solid var(--border-color) !important;
+}
+.nav-item {
+  color: var(--text-secondary) !important;
+  border-radius: var(--radius-md) !important;
+  margin: 0.35rem 1rem !important;
+  padding: 0.85rem 1.15rem !important;
+  font-weight: 500 !important;
+}
+.nav-item:hover {
+  background: rgba(255,255,255,0.02) !important;
+  color: var(--text-main) !important;
+}
+.nav-item.active {
+  background: var(--primary-teal-light) !important;
+  color: var(--primary-teal) !important;
+  border-left: 3px solid var(--primary-teal) !important;
+}
+.nav-item.active i { color: var(--primary-teal) !important; }
+
+/* Headers & Typography */
+h1, h2, h3, h4 {
+  font-family: 'Outfit', sans-serif !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.02em !important;
+}
+
+/* Modals */
+.modal-overlay {
+  background: rgba(9, 9, 11, 0.85) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* AI Banner Gradient */
+.ai-header-banner {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(99, 102, 241, 0.1)) !important;
+  border: 1px solid rgba(14, 165, 233, 0.2) !important;
+}
+
+/* Medication List Items (.med-item-row) */
+.med-item-row {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 1rem 1.25rem !important;
+  margin-bottom: 0.75rem !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  transition: all 0.2s ease-in-out !important;
+  box-shadow: 0 2px 8px -2px rgba(0,0,0,0.3) !important;
+  border-left-width: 4px !important;
+  border-left-style: solid !important;
+}
+
+.med-item-row:hover {
+  background: var(--bg-card-hover) !important;
+  border-color: var(--border-highlight) !important;
+  transform: translateX(4px) !important;
+  box-shadow: 0 4px 12px -2px rgba(0,0,0,0.4) !important;
+}
+
+.med-item-row.taken-status {
+  opacity: 0.65 !important;
+  background: rgba(24, 24, 27, 0.5) !important; /* zinc-900 with opacity */
+  border-left-color: #52525b !important; /* zinc-600 */
+}
+
+.med-left-info {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+}
+
+.med-pill-icon {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: var(--radius-sm) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: var(--bg-dark) !important;
+  border: 1px solid var(--border-color) !important;
+  font-size: 1.5rem !important;
+}
+
+.med-details h4 {
+  margin: 0 0 0.25rem 0 !important;
+  font-size: 1.1rem !important;
+  color: var(--text-main) !important;
+}
+
+.med-meta {
+  display: flex !important;
+  gap: 1rem !important;
+  font-size: 0.85rem !important;
+  color: var(--text-secondary) !important;
+}
+
+.med-actions {
+  display: flex !important;
+  gap: 0.5rem !important;
+}
+
+.take-action-btn {
+  background: rgba(16, 185, 129, 0.1) !important;
+  color: #10b981 !important;
+  border: 1px solid rgba(16, 185, 129, 0.2) !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: var(--radius-sm) !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.take-action-btn:hover {
+  background: #10b981 !important;
+  color: #fff !important;
+}
+
+.remove-action-btn {
+  background: transparent !important;
+  color: var(--text-muted) !important;
+  border: 1px solid transparent !important;
+  padding: 0.5rem !important;
+  border-radius: var(--radius-sm) !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.remove-action-btn:hover {
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.1) !important;
+}
+
+.status-badge.badge-taken {
+  background: rgba(16, 185, 129, 0.1) !important;
+  color: #10b981 !important;
+  border: 1px solid rgba(16, 185, 129, 0.2) !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: var(--radius-sm) !important;
+  font-weight: 500 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+}
+
+/* Editorial Layout Adjustments */
+.editorial-metrics {
+  display: flex !important;
+  gap: 3rem !important;
+  margin: 3rem 0 4rem 0 !important;
+  padding: 0 1rem !important;
+  flex-wrap: wrap !important;
+}
+
+.metric-item {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
+}
+
+.metric-label {
+  font-size: 0.85rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: var(--text-muted) !important;
+  font-weight: 600 !important;
+}
+
+.metric-value {
+  font-family: 'Outfit', sans-serif !important;
+  font-size: 3rem !important;
+  font-weight: 300 !important;
+  letter-spacing: -0.04em !important;
+  margin: 0 !important;
+  color: #fff !important;
+  line-height: 1 !important;
+}
+
+.spatial-schedule-section {
+  margin-top: 2rem !important;
+}
+
+.editorial-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-end !important;
+  margin-bottom: 2.5rem !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  padding-bottom: 1.5rem !important;
+}
+
+.header-titles {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+}
+
+.header-titles h2 {
+  font-size: 2rem !important;
+  font-weight: 300 !important;
+  margin: 0 !important;
+  color: #fff !important;
+}
+
+.editorial-badge {
+  background: var(--bg-card-hover) !important;
+  color: var(--text-secondary) !important;
+  padding: 0.25rem 0.75rem !important;
+  border-radius: 9999px !important;
+  font-size: 0.85rem !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.spatial-med-list .med-item-row {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 1.5rem 0 !important;
+  margin-bottom: 0 !important;
+  border-left: none !important;
+  transition: background 0.3s ease !important;
+}
+
+.spatial-med-list .med-item-row:hover {
+  background: rgba(255,255,255,0.02) !important;
+  transform: none !important;
+  box-shadow: none !important;
+  border-color: var(--border-highlight) !important;
+}
+
+.spatial-med-list .med-pill-icon {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-highlight) !important;
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 50% !important; /* Circular like pills */
+}
+
+.spatial-med-list .med-details h4 {
+  font-size: 1.25rem !important;
+  font-weight: 400 !important;
+}
+
+.spatial-med-list .med-meta {
+  font-size: 0.95rem !important;
+}
+
+.spatial-med-list .take-action-btn, 
+.spatial-med-list .remove-action-btn {
+  border-radius: 9999px !important;
+  padding: 0.5rem 1.25rem !important;
+}
+
+/* Med Card specific styles */
+.med-card {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1rem !important;
+  padding: 1.25rem !important;
+}
+
+.med-card-top {
+  display: flex !important;
+  gap: 1rem !important;
+  align-items: center !important;
+}
+
+.med-card-stock {
+  margin-top: auto !important;
+  background: var(--bg-dark) !important;
+  padding: 0.75rem !important;
+  border-radius: var(--radius-sm) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.med-card-actions {
+  display: flex !important;
+  gap: 0.75rem !important;
+  margin-top: 0.5rem !important;
+}
+
+/* Force overrides for Legacy Neon Effects */
+.nav-item.active,
+.mobile-nav-item.active,
+.nav-item.active[data-neon-color], 
+.mobile-nav-item.active[data-neon-color] {
+  background: var(--bg-card-hover) !important;
+  color: var(--text-main) !important;
+  border-left: 3px solid var(--text-main) !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+
+.nav-item.active i,
+.mobile-nav-item.active i,
+.nav-item.active[data-neon-color] i, 
+.mobile-nav-item.active[data-neon-color] i {
+  color: var(--text-main) !important;
+  filter: none !important;
+}
+
+/* Remove Logo Glow and gradients */
+.medimate-logo-svg filter,
+.splash-logo-svg filter,
+.sidebar-logo-icon filter {
+  display: none !important;
+}
+.medimate-logo-svg path,
+.splash-logo-svg path,
+.sidebar-logo-icon svg path,
+.logo-icon svg path {
+  filter: none !important;
+}
+.logo-icon, .sidebar-logo-icon, .splash-logo-container {
+  box-shadow: none !important;
+  filter: none !important;
+  background: transparent !important;
+}
+
+/* Add Medication Button */
+.add-med-header-btn, .primary-btn, .hero-cta {
+  background: var(--primary-teal) !important;
+  box-shadow: none !important;
+  border: 1px solid var(--primary-teal-hover) !important;
+  text-shadow: none !important;
+}
+.add-med-header-btn:hover, .primary-btn:hover, .hero-cta:hover {
+  background: var(--primary-teal-hover) !important;
+  box-shadow: none !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Summary Cards specific glow removal */
+.summary-card.glow-teal, .summary-card.glow-green, .summary-card.glow-amber, .summary-card.glow-indigo, .summary-card.glow-rose {
+  box-shadow: 0 4px 20px -2px rgba(0,0,0,0.4) !important;
+  animation: none !important;
+}
+.summary-card:hover {
+  box-shadow: 0 8px 30px -4px rgba(0,0,0,0.5) !important;
+  animation: none !important;
+}
+.card-icon {
+  background: var(--bg-dark) !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+.card-icon i {
+  filter: none !important;
+  color: var(--primary-teal) !important;
+}
+
+/* Canvas/Sphere Container Glow Removal */
+#careSceneCanvas, .care-hero-stage canvas {
+  filter: none !important;
+  box-shadow: none !important;
+}
+.care-hero-stage {
+  box-shadow: none !important;
+}
+
+/* Editorial Hero Section Overrides */
+.care-hero {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  margin-top: 1rem !important;
+  margin-bottom: 3rem !important;
+}
+
+.care-hero::after {
+  display: none !important;
+}
+
+.care-hero-copy {
+  padding: 0 1rem !important;
+  justify-content: flex-start !important;
+  padding-top: 4rem !important;
+}
+
+.care-hero h2 {
+  font-family: 'Outfit', sans-serif !important;
+  font-size: clamp(3.5rem, 6vw, 6.5rem) !important;
+  font-weight: 300 !important;
+  line-height: 1 !important;
+  letter-spacing: -0.05em !important;
+  color: #fff !important;
+  max-width: 800px !important;
+  margin: 1rem 0 2rem 0 !important;
+}
+
+.eyebrow-label {
+  color: var(--text-secondary) !important;
+  font-size: 0.85rem !important;
+  letter-spacing: 0.1em !important;
+  font-weight: 500 !important;
+}
+
+.care-hero-copy p {
+  font-size: 1.1rem !important;
+  color: var(--text-muted) !important;
+  max-width: 500px !important;
+  font-weight: 300 !important;
+  line-height: 1.6 !important;
+}
+
+.hero-signal-row {
+  margin-top: 4rem !important;
+  border-top: 1px solid var(--border-color) !important;
+  padding-top: 2rem !important;
+  gap: 3rem !important;
+}
+
+.hero-signal-row strong {
+  font-size: 2rem !important;
+  font-weight: 300 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.hero-signal-row span {
+  color: var(--text-muted) !important;
+  letter-spacing: 0.05em !important;
+}
+
+.hero-orbit-label {
+  background: rgba(9, 9, 11, 0.6) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-main) !important;
+}
+
+/* Responsive Overrides */
+@media (max-width: 768px) {
+  .dashboard-cards {
+    grid-template-columns: 1fr !important;
+  }
+  .medication-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .med-item-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+  }
+  .med-actions {
+    width: 100% !important;
+    justify-content: flex-end !important;
+  }
+  .take-action-btn {
+    flex-grow: 1 !important;
+    justify-content: center !important;
+    display: flex !important;
+  }
+}
